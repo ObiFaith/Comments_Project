@@ -63,20 +63,6 @@
           }
         }
       ]
-    },
-    {
-      "id": 5,
-      "content": "Hi",
-      "createdAt": "Today",
-      "score": 0,
-      "user": {
-        "image": {
-          "png": "./images/avatars/image-juliusomo.png",
-          "webp": "./images/avatars/image-juliusomo.webp"
-        },
-        "username": "juliusomo"
-      },
-      "replies": []
     }
   ]
 }
