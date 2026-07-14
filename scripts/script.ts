@@ -28,7 +28,7 @@ const renderComment = (data: UserComment, parentId: number = 0): string => {
                     </div>
                     <div class="hidden md:flex">${renderCTA("juliusomo", data, parentId)}</div>
                 </div>
-                <p class="py-4">${data?.replyingTo && `<span class="text-blue-700 font-bold">@${data?.replyingTo}</span>`} ${data.content}</p>
+                <p class="py-4">${data.replyingTo ? `<span class="text-blue-700 font-bold">@${data?.replyingTo}</span>` : ""} ${data.content}</p>
             </div>
         </div>
         <div class="text-blue-700 bg-red-500 flex justify-between md:hidden">
@@ -40,14 +40,24 @@ const renderComment = (data: UserComment, parentId: number = 0): string => {
 
 const renderVote = (data: UserComment, parentId: number = 0): string =>
   `<div class="bg-gray-200 items-center max-h-24 text-blue-600 flex md:flex-col md:gap-2 gap-4 px-3 max-md:py-2 md:pb-1 font-bold rounded-md">
-        <span class="cursor-pointer hover:text-blue-700" onclick="vote(${data.id}, '+', ${parentId})">+</span>
+        <span class="vote-button" data-action="increase-vote" data-id="${data.id}" data-parent-id="${parentId}">+</span>
         <span class="text-blue-700">${data.score}</span>
-        <span class="cursor-pointer hover:text-blue-700" onclick="vote(${data.id}, '-', ${parentId})">-</span>
+        <span class="vote-button" data-action="decrease-vote" data-id="${data.id}" data-parent-id="${parentId}">-</span>
     </div>`;
+
+const addNewComment = async (): Promise<string> => {
+  const user = (await fetchData("currentUser")) as CurrentUser;
+
+  return `<div class="py-4"><div class="bg-white p-4 flex gap-3 md:p-6 rounded-lg shadow-md">
+        <div><img width="40" src="${user.image.png}" alt="${user.username}"/></div>
+        <textarea type="text" name="reply" placeholder="Add a comment" class="reply-textarea border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200"></textarea>
+        <button class="send-button" data-action="send">Send</button>
+    </div></div>`;
+};
 
 const renderReply = async (
   btn: string,
-  commentId: number = 0, // TODO: Why is it not used?
+  commentId: number = 0, // TODO: Why is it not used? (Send Reply)
 ): Promise<string> => {
   const user = (await fetchData("currentUser")) as CurrentUser;
 
@@ -171,13 +181,13 @@ const showReply = async (id: number) => {
 };
 
 const delPopUp = (id: number, parentId: number): string =>
-  `<div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-        <div class="bg-white w-2/3 md:w-1/4 p-6 rounded-lg shadow-md">
+  `<div id="overlay" class="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+        <div class="bg-white w-2/3 md:w-1/3 p-6 rounded-lg shadow-md">
             <h2 class="text-lg font-bold mb-4">Delete Comment</h2>
             <p class="mb-6">Are you sure you want to delete this comment? This will remove the comment and can't be undone.</p>
             <div class="flex gap-4 *:text-white *:uppercase *:text-sm *:font-medium">
-                <button onclick="closePopup()" class="bg-blue-800 hover:bg-gray-400 px-4 py-2 rounded-md">No, Cancel</button>
-                <button onclick="deleteComment(${id}, ${parentId})" class="bg-red-200 hover:bg-red-100 px-4 py-2 rounded-md">Yes, Delete</button>
+                <button class="cancel-button" data-action="cancel">No, Cancel</button>
+                <button class="confirm-button" data-action="confirm" data-id="${id}" data-parent-id="${parentId}">Yes, Delete</button>
             </div>
         </div>
     </div>`;
@@ -195,16 +205,16 @@ const renderCTA = (
   data.user.username !== user
     ? `<div class="flex items-center gap-2">
         <div><img src="./images/icon-reply.svg" alt="icon-reply"></div>
-        <p class="text-sm cursor-pointer font-bold text-blue-700 hover:text-blue-600" onclick="showReply(${data.id})">Reply</p>
+        <p class="show-reply" data-action="reply" data-id="${data.id}">Reply</p>
         </div>`
     : `<div class="flex items-center gap-4">
         <div class="flex items-center gap-2">
             <div><img src="./images/icon-delete.svg" alt="icon-delete"></div>
-            <p class="text-sm cursor-pointer font-bold text-red-200 hover:text-red-100" onclick="showDelPopUp(${data.id}, ${parentId})">Delete</p>
+            <p class="delete-button" data-action="delete" data-id="${data.id}" data-parent-id="${parentId}">Delete</p>
         </div>
         <div class="flex items-center gap-2">
             <div><img src="./images/icon-edit.svg" alt="icon-edit"></div>
-            <p class="text-sm cursor-pointer font-bold text-blue-700 hover:text-blue-600" onclick="editComment(${data.id}, ${parentId})">Edit</p>
+            <p class="edit-button" data-action="edit" data-id="${data.id}" data-parent-id="${parentId}">Edit</p>
         </div>
     </div>`;
 
@@ -251,8 +261,9 @@ const editComment = async (id: number, parentId: number) => {
 };
 
 // Display Contents in DOM
+const body = document.querySelector("body");
+
 const displayContents = async () => {
-  const body = document.querySelector("body");
   if (!body) throw new Error("Body element not found");
 
   let comments = (await fetchData("comments")) as UserComment[];
@@ -273,10 +284,46 @@ const displayContents = async () => {
     )
     .join("");
 
-  const replyHTML = await renderReply("Send");
-  body.innerHTML = commentsHTML + replyHTML;
-
-  document.querySelector(".reply-btn")?.addEventListener("click", addComment);
+  const addCommentHtml = await addNewComment();
+  body.innerHTML = commentsHTML + addCommentHtml;
 };
 
 displayContents();
+
+body?.addEventListener("click", event => {
+  event.preventDefault();
+
+  const target = event.target as HTMLElement;
+  const button = target.closest("[data-action]");
+
+  if (!(button instanceof HTMLElement)) return;
+
+  const { id, action, parentId } = button.dataset;
+
+  switch (action) {
+    case "reply":
+      showReply(Number(id));
+      break;
+    case "edit":
+      editComment(Number(id), Number(parentId));
+      break;
+    case "delete":
+      showDelPopUp(Number(id), Number(parentId));
+      break;
+    case "send":
+      addComment();
+      break;
+    case "increase-vote":
+      vote(Number(id), "+", Number(parentId));
+      break;
+    case "decrease-vote":
+      vote(Number(id), "-", Number(parentId));
+      break;
+    case "cancel":
+      closePopup();
+      break;
+    case "confirm":
+      deleteComment(Number(id), Number(parentId));
+      break;
+  }
+});

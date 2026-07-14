@@ -16,5 +16,27 @@
   --color-red-200: #ed6468;
   --color-red-100: #ffb8bb;
 
+  --color-black: #000000;
   --color-white: #ffffff;
+}
+
+@layer components {
+  .edit-button, .show-reply { /* editComment, showReply */
+    @apply text-sm cursor-pointer font-bold text-blue-700 hover:text-blue-600
+  }
+  .delete-button { /* showDelPopUp */
+    @apply text-sm cursor-pointer font-bold text-red-200 hover:text-red-100
+  }
+  .send-button { /* addComment */
+    @apply cursor-pointer bg-blue-700 hover:bg-blue-600 text-white font-medium md:text-lg max-h-10 rounded-lg px-4 py-1
+  }
+  .vote-button { /* vote */
+    @apply cursor-pointer hover:text-blue-700
+  }
+  .cancel-button { /* closePopup */
+    @apply cursor-pointer bg-blue-800 hover:bg-gray-400 px-4 py-2 rounded-md
+  }
+  .confirm-button { /* deleteComment */
+    @apply cursor-pointer bg-red-200 hover:bg-red-100 px-4 py-2 rounded-md
+  }
 }
