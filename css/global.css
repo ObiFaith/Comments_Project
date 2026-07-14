@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+@theme {
+  /* Remove default Tailwind colors */
+  --color-*: initial;
+
+  /* Custom colors only */
+  --color-blue-800: #324152;
+  --color-blue-700: #5457B6;
+  --color-blue-600: #c3c4ef;
+  --color-blue-100: #f5f6fa;
+
+  --color-gray-400: #67727e;
+  --color-gray-200: #eaecf1;
+
+  --color-red-200: #ed6468;
+  --color-red-100: #ffb8bb;
+}
