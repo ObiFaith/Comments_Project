@@ -12,7 +12,6 @@ export interface UserComment {
   createdAt: string;
   score: number;
   user: CurrentUser;
-  replies: UserReply[];
+  replyingTo?: string;
+  replies: UserComment[];
 }
-
-export type UserReply = UserComment & { replyingTo: string };

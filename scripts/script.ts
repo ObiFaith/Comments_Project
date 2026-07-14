@@ -1,4 +1,4 @@
-import { CurrentUser, UserComment, UserReply } from "./types";
+import { CurrentUser, UserComment } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -8,15 +8,7 @@ const fetchData = async (api: string) => {
   return res.json();
 };
 
-const processComments = (comments: any[]): UserComment[] => {
-  return comments.map(comment => ({
-    ...comment,
-    id: Number(comment.id),
-    replies: comment.replies ? processComments(comment.replies) : [],
-  }));
-};
-
-const renderComment = (data: any, parentId: number = 0): string => {
+const renderComment = (data: UserComment, parentId: number = 0): string => {
   if (!data.user || !data.user.image || !data.user.username) {
     console.error("Invalid user data:", data);
     return `<div>Error: Invalid user data</div>`;
@@ -36,7 +28,7 @@ const renderComment = (data: any, parentId: number = 0): string => {
                     </div>
                     <div class="hidden md:flex">${renderCTA("juliusomo", data, parentId)}</div>
                 </div>
-                <p class="py-4">${data.replyingTo ? `<span class="text-blue-700 font-bold">@${data.replyingTo}</span>` : ""} ${data.content}</p>
+                <p class="py-4">${data?.replyingTo && `<span class="text-blue-700 font-bold">@${data?.replyingTo}</span>`} ${data.content}</p>
             </div>
         </div>
         <div class="text-blue-700 bg-red-500 flex justify-between md:hidden">
@@ -55,12 +47,12 @@ const renderVote = (data: UserComment, parentId: number = 0): string =>
 
 const renderReply = async (
   btn: string,
-  commentId: number = 0,
+  commentId: number = 0, // TODO: Why is it not used?
 ): Promise<string> => {
   const user = (await fetchData("currentUser")) as CurrentUser;
 
   return `<div class="${btn === "Send" ? "py-4" : "mb-4 reply"}"><div class="bg-white p-4 flex gap-3 md:p-6 rounded-lg shadow-md">
-        <div class=""><img width="40" src="${user.image.png}" alt="${user.username}"/></div>
+        <div><img width="40" src="${user.image.png}" alt="${user.username}"/></div>
         <textarea type="text" name="reply" placeholder="Add a comment" class="reply-textarea border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200"></textarea>
         <button class="reply-btn bg-blue-700 text-white font-medium md:text-lg max-h-10 rounded-lg px-4 py-1">${btn}</button>
     </div></div>`;
@@ -94,6 +86,7 @@ const addComment = async () => {
 };
 
 const addCommentReply = async (commentId: number) => {
+  // TODO: Why is it yet to be used?
   const textarea = document.querySelector(
     ".reply-textarea",
   ) as HTMLTextAreaElement;
@@ -106,7 +99,7 @@ const addCommentReply = async (commentId: number) => {
   const comment = await fetchData(`comments/${commentId}`);
   const username = comment.user.username;
 
-  const reply: UserReply = {
+  const reply: UserComment = {
     id: userId,
     content,
     createdAt: "Today",
@@ -263,21 +256,20 @@ const displayContents = async () => {
   if (!body) throw new Error("Body element not found");
 
   let comments = (await fetchData("comments")) as UserComment[];
-  comments = processComments(comments);
   comments = comments.sort((a, b) => b.score - a.score);
 
   const commentsHTML = comments
     .map(
       comment => `
-        ${renderComment(comment)}
-        ${
-          comment.replies.length > 0
-            ? `<div class="pl-4 ml-4 border-0 border-l-2 border-l-gray-200">
-            ${comment.replies.map(reply => renderComment(reply, comment.id)).join("")}
-        </div>`
-            : ""
-        }
-    `,
+          ${renderComment(comment)}
+          ${
+            comment.replies.length > 0
+              ? `<div class="pl-4 ml-4 border-0 border-l-2 border-l-gray-200">
+              ${comment?.replies.map(reply => renderComment(reply, comment.id)).join("")}
+          </div>`
+              : ""
+          }
+      `,
     )
     .join("");
 
