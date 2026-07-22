@@ -21,22 +21,22 @@
 }
 
 @layer components {
-  .edit-button, .show-reply { /* editComment, showReply */
-    @apply text-sm cursor-pointer font-bold text-blue-700 hover:text-blue-600
+  .edit-button, .show-reply {
+    @apply text-sm cursor-pointer font-bold text-blue-700 hover:opacity-80 disabled:opacity-50
   }
-  .delete-button { /* showDelPopUp */
-    @apply text-sm cursor-pointer font-bold text-red-200 hover:text-red-100
+  .delete-button {
+    @apply text-sm cursor-pointer font-bold text-red-200 hover:opacity-80 disabled:opacity-50
   }
-  .send-button { /* addComment */
+  .send-button {
     @apply cursor-pointer bg-blue-700 hover:bg-blue-600 text-white font-medium md:text-lg max-h-10 rounded-lg px-4 py-1
   }
-  .vote-button { /* vote */
+  .vote-button {
     @apply cursor-pointer hover:text-blue-700
   }
-  .cancel-button { /* closePopup */
+  .cancel-button {
     @apply cursor-pointer bg-blue-800 hover:bg-gray-400 px-4 py-2 rounded-md
   }
-  .confirm-button { /* deleteComment */
+  .confirm-button {
     @apply cursor-pointer bg-red-200 hover:bg-red-100 px-4 py-2 rounded-md
   }
 }

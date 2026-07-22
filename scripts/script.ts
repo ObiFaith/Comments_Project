@@ -139,7 +139,7 @@ const vote = async (id: number, op: "+" | "-", parentId: number) => {
   if (!parentId)
     comment.score = op === "+" ? comment.score + 1 : comment.score - 1;
   else {
-    const replyIndex = comment.replies.findIndex(reply => reply.id === id);
+    const replyIndex = comment.replies.findIndex((reply) => reply.id === id);
     const newScore =
       op === "+"
         ? comment.replies[replyIndex].score + 1
@@ -162,22 +162,23 @@ const showReply = async (id: number) => {
   const existingReplyBox = Array.from(
     document.querySelectorAll("div.reply"),
   ).find(
-    element => element.textContent && element.textContent.includes("Update"),
+    (element) => element.textContent && element.textContent.includes("Reply"),
   );
-  if (existingReplyBox) existingReplyBox.remove();
+  if (existingReplyBox) {
+    existingReplyBox.previousElementSibling
+      ?.querySelector(".show-reply")
+      ?.removeAttribute("disabled");
+    existingReplyBox.remove();
+  }
 
   // Find the comment element that was clicked
   const commentElement = document.querySelectorAll("div.bg-white.p-4")[id - 1];
-  const existingReplyElement = commentElement.nextElementSibling;
+  // console.log(commentElement)
 
   // Toggle the reply element
-  if (
-    !existingReplyElement ||
-    !existingReplyElement.classList.contains("reply")
-  ) {
-    const replyHTML = await renderReply("Update", id);
-    commentElement.insertAdjacentHTML("afterend", replyHTML);
-  }
+  const replyHTML = await renderReply("Reply", id);
+  commentElement.insertAdjacentHTML("afterend", replyHTML);
+  commentElement?.querySelector(".show-reply")?.setAttribute("disabled", "");
 };
 
 const delPopUp = (id: number, parentId: number): string =>
@@ -203,19 +204,19 @@ const renderCTA = (
   parentId: number,
 ): string =>
   data.user.username !== user
-    ? `<div class="flex items-center gap-2">
+    ? `<button class="flex items-center gap-2 show-reply" data-action="reply" data-id="${data.id}">
         <div><img src="./images/icon-reply.svg" alt="icon-reply"></div>
-        <p class="show-reply" data-action="reply" data-id="${data.id}">Reply</p>
-        </div>`
+        <p>Reply</p>
+        </button>`
     : `<div class="flex items-center gap-4">
-        <div class="flex items-center gap-2">
+        <button class="flex items-center gap-2 delete-button" data-action="delete" data-id="${data.id}" data-parent-id="${parentId}">
             <div><img src="./images/icon-delete.svg" alt="icon-delete"></div>
-            <p class="delete-button" data-action="delete" data-id="${data.id}" data-parent-id="${parentId}">Delete</p>
-        </div>
-        <div class="flex items-center gap-2">
+            <p>Delete</p>
+        </button>
+        <button class="flex items-center gap-2 edit-button" data-action="edit" data-id="${data.id}" data-parent-id="${parentId}">
             <div><img src="./images/icon-edit.svg" alt="icon-edit"></div>
-            <p class="edit-button" data-action="edit" data-id="${data.id}" data-parent-id="${parentId}">Edit</p>
-        </div>
+            <p>Edit</p>
+        </button>
     </div>`;
 
 const showDelPopUp = (id: number, parentId: number) =>
@@ -234,7 +235,7 @@ const deleteComment = async (id: number, parentId: number) => {
     // Remove reply with id from comment
     const comment = (await fetchData(`comments/${parentId}`)) as UserComment;
 
-    const replyIndex = comment.replies.findIndex(reply => reply.id === id);
+    const replyIndex = comment.replies.findIndex((reply) => reply.id === id);
     if (replyIndex !== -1) comment.replies.splice(replyIndex, 1);
 
     const updateComment = await fetch(`${API_URL}/comments/${userId}`, {
@@ -258,6 +259,10 @@ const editComment = async (id: number, parentId: number) => {
     throw new Error("Text element within the comment not found");
 
   const commentText = commentTextElement.textContent;
+  commentTextElement.innerHTML = `
+    <textarea type="text" name="reply" placeholder="Add a comment" class="reply-textarea border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200">${commentText}</textarea>
+    <button class="send-button" data-action="send">Send</button>
+  `;
 };
 
 // Display Contents in DOM
@@ -271,12 +276,12 @@ const displayContents = async () => {
 
   const commentsHTML = comments
     .map(
-      comment => `
+      (comment) => `
           ${renderComment(comment)}
           ${
             comment.replies.length > 0
               ? `<div class="pl-4 ml-4 border-0 border-l-2 border-l-gray-200">
-              ${comment?.replies.map(reply => renderComment(reply, comment.id)).join("")}
+              ${comment?.replies.map((reply) => renderComment(reply, comment.id)).join("")}
           </div>`
               : ""
           }
@@ -290,7 +295,7 @@ const displayContents = async () => {
 
 displayContents();
 
-body?.addEventListener("click", event => {
+body?.addEventListener("click", (event) => {
   event.preventDefault();
 
   const target = event.target as HTMLElement;
