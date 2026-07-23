@@ -15,7 +15,7 @@ const renderComment = (data: UserComment, parentId: number = 0): string => {
   }
 
   return `
-    <div class="bg-white md:gap-5 p-4 md:p-6 rounded-lg md:flex shadow-md mb-4">
+    <div class="comment">
         <div class="hidden md:block">${renderVote(data, parentId)}</div>
         <div class="flex gap-6 items-center w-full">
             <div class="flex flex-col w-full">
@@ -45,47 +45,49 @@ const renderVote = (data: UserComment, parentId: number = 0): string =>
         <span class="vote-button" data-action="decrease-vote" data-id="${data.id}" data-parent-id="${parentId}">-</span>
     </div>`;
 
-const addNewComment = async (): Promise<string> => {
+const sendComment = async (): Promise<string> => {
   const user = (await fetchData("currentUser")) as CurrentUser;
 
   return `<div class="py-4"><div class="bg-white p-4 flex gap-3 md:p-6 rounded-lg shadow-md">
         <div><img width="40" src="${user.image.png}" alt="${user.username}"/></div>
-        <textarea type="text" name="reply" placeholder="Add a comment" class="reply-textarea border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200"></textarea>
+        <textarea type="text" name="reply" placeholder="Add a comment" class="send-comment"></textarea>
         <button class="send-button" data-action="send">Send</button>
     </div></div>`;
 };
 
 const renderReply = async (
-  btn: string,
+  value: string,
   commentId: number = 0, // TODO: Why is it not used? (Send Reply)
 ): Promise<string> => {
   const user = (await fetchData("currentUser")) as CurrentUser;
 
-  return `<div class="${btn === "Send" ? "py-4" : "mb-4 reply"}"><div class="bg-white p-4 flex gap-3 md:p-6 rounded-lg shadow-md">
+  return `<div class="${value === "Send" ? "py-4" : "mb-4 reply"}"><div class="bg-white p-4 flex gap-3 md:p-6 rounded-lg shadow-md">
         <div><img width="40" src="${user.image.png}" alt="${user.username}"/></div>
-        <textarea type="text" name="reply" placeholder="Add a comment" class="reply-textarea border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200"></textarea>
-        <button class="reply-btn bg-blue-700 text-white font-medium md:text-lg max-h-10 rounded-lg px-4 py-1">${btn}</button>
+        <textarea type="text" name="reply" placeholder="Add a comment" class="reply-textarea"></textarea>
+        <button class="reply-button">${value}</button>
     </div></div>`;
 };
 
 const addComment = async () => {
   const textarea = document.querySelector(
-    ".reply-textarea",
+    ".send-comment",
   ) as HTMLTextAreaElement;
-  if (!textarea) throw new Error("Textarea not found");
 
-  const content = textarea.value;
+  if (!textarea) throw new Error("Textarea not found");
+  if (!textarea.value) return
+
   const user = (await fetchData("currentUser")) as CurrentUser;
   const userId = (await getLastId()) + 1;
 
   const comment: UserComment = {
     id: userId,
-    content,
+    content: textarea.value,
     createdAt: "Today",
     score: 0,
     user,
     replies: [],
   };
+
   const res = await fetch(`${API_URL}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -102,7 +104,6 @@ const addCommentReply = async (commentId: number) => {
   ) as HTMLTextAreaElement;
   if (!textarea) throw new Error("Textarea not found");
 
-  const content = textarea.value;
   const user = (await fetchData("currentUser")) as CurrentUser;
   const userId = (await getLastId()) + 1;
 
@@ -111,7 +112,7 @@ const addCommentReply = async (commentId: number) => {
 
   const reply: UserComment = {
     id: userId,
-    content,
+    content: textarea.value,
     createdAt: "Today",
     score: 0,
     user,
@@ -172,8 +173,7 @@ const showReply = async (id: number) => {
   }
 
   // Find the comment element that was clicked
-  const commentElement = document.querySelectorAll("div.bg-white.p-4")[id - 1];
-  // console.log(commentElement)
+  const commentElement = document.querySelectorAll(".comment")[id - 1];
 
   // Toggle the reply element
   const replyHTML = await renderReply("Reply", id);
@@ -223,14 +223,11 @@ const showDelPopUp = (id: number, parentId: number) =>
   document.body.insertAdjacentHTML("beforeend", delPopUp(id, parentId));
 
 const deleteComment = async (id: number, parentId: number) => {
-  const userId = parentId !== 0 ? parentId : id;
-
   if (!parentId) {
-    const res = await fetch(`${API_URL}/comments/${userId}`, {
+    const res = await fetch(`${API_URL}/comments/${id}`, {
       method: "DELETE",
     });
-    if (!res.ok)
-      throw new Error(`Unable to delete comment with userId: ${userId}`);
+    if (!res.ok) throw new Error(`Unable to delete comment with id: ${id}`);
   } else {
     // Remove reply with id from comment
     const comment = (await fetchData(`comments/${parentId}`)) as UserComment;
@@ -238,7 +235,7 @@ const deleteComment = async (id: number, parentId: number) => {
     const replyIndex = comment.replies.findIndex((reply) => reply.id === id);
     if (replyIndex !== -1) comment.replies.splice(replyIndex, 1);
 
-    const updateComment = await fetch(`${API_URL}/comments/${userId}`, {
+    const updateComment = await fetch(`${API_URL}/comments/${parentId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...comment }),
@@ -250,18 +247,43 @@ const deleteComment = async (id: number, parentId: number) => {
   closePopup();
 };
 
+const updateComment = async (id: number, parentId: number) => {
+  const textarea = document.querySelector(
+    ".edit-textarea",
+  ) as HTMLTextAreaElement;
+
+  if (!textarea) throw new Error("Textarea not found");
+  if (!textarea.value || textarea.value == localStorage?.getItem("comment")) return
+
+  if (!parentId) {
+    const comment = (await fetchData(`comments/${parentId}`)) as UserComment;
+  } else {
+    const comment = (await fetchData(`comments/${id}`)) as UserComment;
+    const updateComment = await fetch(`${API_URL}/comments/${parentId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...comment, content: textarea.value}),
+    });
+    if (!updateComment.ok)
+      throw new Error(`Unable to update comment with id ${id}`);
+  }
+};
+
 const editComment = async (id: number, parentId: number) => {
-  // Implement edit logic here  <div></div>
-  const commentElement = document.querySelectorAll("div.bg-white.p-4")[id - 1];
+  const commentElement = document.querySelectorAll(".comment")[id - 1];
   const commentTextElement = commentElement.querySelector(".py-4");
 
   if (!commentTextElement)
     throw new Error("Text element within the comment not found");
 
-  const commentText = commentTextElement.textContent;
+  localStorage.setItem("comment", commentTextElement.textContent);
+
+  commentElement.querySelector(".edit-button")?.setAttribute("disabled", "");
   commentTextElement.innerHTML = `
-    <textarea type="text" name="reply" placeholder="Add a comment" class="reply-textarea border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200">${commentText}</textarea>
-    <button class="send-button" data-action="send">Send</button>
+    <textarea type="text" name="reply" placeholder="Add a comment" class="edit-textarea">${commentTextElement.textContent}</textarea>
+    <div class="flex justify-end pt-3">
+      <button class="send-button" data-id="${id}" data-parent-id="${parentId}" data-action="edit-comment">Update</button>
+    </div>
   `;
 };
 
@@ -289,7 +311,7 @@ const displayContents = async () => {
     )
     .join("");
 
-  const addCommentHtml = await addNewComment();
+  const addCommentHtml = await sendComment();
   body.innerHTML = commentsHTML + addCommentHtml;
 };
 
@@ -311,6 +333,9 @@ body?.addEventListener("click", (event) => {
       break;
     case "edit":
       editComment(Number(id), Number(parentId));
+      break;
+    case "edit-comment":
+      updateComment(Number(id), Number(parentId));
       break;
     case "delete":
       showDelPopUp(Number(id), Number(parentId));

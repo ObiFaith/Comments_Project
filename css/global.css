@@ -24,8 +24,20 @@
   .edit-button, .show-reply {
     @apply text-sm cursor-pointer font-bold text-blue-700 hover:opacity-80 disabled:opacity-50
   }
+  .comment {
+    @apply bg-white md:gap-5 p-4 md:p-6 rounded-lg md:flex shadow-md mb-4
+  }
+  .edit-textarea {
+    @apply border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200
+  }
   .delete-button {
     @apply text-sm cursor-pointer font-bold text-red-200 hover:opacity-80 disabled:opacity-50
+  }
+  .send-comment, .reply-textarea {
+    @apply border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200
+  }
+  .reply-button {
+    @apply bg-blue-700 text-white font-medium md:text-lg max-h-10 rounded-lg px-4 py-1
   }
   .send-button {
     @apply cursor-pointer bg-blue-700 hover:bg-blue-600 text-white font-medium md:text-lg max-h-10 rounded-lg px-4 py-1
