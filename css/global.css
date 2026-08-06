@@ -6,7 +6,7 @@
 
   /* Custom colors only */
   --color-blue-800: #324152;
-  --color-blue-700: #5457B6;
+  --color-blue-700: #5457b6;
   --color-blue-600: #c3c4ef;
   --color-blue-100: #f5f6fa;
 
@@ -21,34 +21,34 @@
 }
 
 @layer components {
-  .edit-button, .show-reply {
-    @apply text-sm cursor-pointer font-bold text-blue-700 hover:opacity-80 disabled:opacity-50
+  .edit-button,
+  .show-reply {
+    @apply text-sm cursor-pointer font-bold text-blue-700 hover:opacity-80 disabled:opacity-50;
   }
   .comment {
-    @apply bg-white md:gap-5 p-4 md:p-6 rounded-lg md:flex shadow-md mb-4
+    @apply bg-white md:gap-5 p-4 md:p-6 rounded-lg md:flex shadow-md mb-4;
   }
   .edit-textarea {
-    @apply border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200
+    @apply border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200;
   }
   .delete-button {
-    @apply text-sm cursor-pointer font-bold text-red-200 hover:opacity-80 disabled:opacity-50
+    @apply text-sm cursor-pointer font-bold text-red-200 hover:opacity-80 disabled:opacity-50;
   }
-  .send-comment, .reply-textarea {
-    @apply border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200
+  .send-comment,
+  .reply-textarea {
+    @apply border min-h-24 resize-none p-2 outline-0 w-full rounded-md border-gray-200;
   }
-  .reply-button {
-    @apply bg-blue-700 text-white font-medium md:text-lg max-h-10 rounded-lg px-4 py-1
-  }
+  .reply-button,
   .send-button {
-    @apply cursor-pointer bg-blue-700 hover:bg-blue-600 text-white font-medium md:text-lg max-h-10 rounded-lg px-4 py-1
+    @apply cursor-pointer bg-blue-700 hover:bg-blue-600 text-white font-medium md:text-lg max-h-10 rounded-lg px-4 py-1;
   }
   .vote-button {
-    @apply cursor-pointer hover:text-blue-700
+    @apply cursor-pointer hover:text-blue-700;
   }
   .cancel-button {
-    @apply cursor-pointer bg-blue-800 hover:bg-gray-400 px-4 py-2 rounded-md
+    @apply cursor-pointer bg-blue-800 hover:bg-gray-400 px-4 py-2 rounded-md;
   }
   .confirm-button {
-    @apply cursor-pointer bg-red-200 hover:bg-red-100 px-4 py-2 rounded-md
+    @apply cursor-pointer bg-red-200 hover:bg-red-100 px-4 py-2 rounded-md;
   }
 }
