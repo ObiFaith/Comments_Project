@@ -85,8 +85,7 @@ const addCommentReply = async (id: number, parentId: number) => {
   const comment = (await fetchData(
     `comments/${parentId ? parentId : id}`,
   )) as UserComment;
-
-  let reply = {
+  const reply = {
     id: replyId,
     content: textarea.value,
     createdAt: "Today",
@@ -96,15 +95,12 @@ const addCommentReply = async (id: number, parentId: number) => {
     replyingTo: comment.user.username,
   };
 
-  if (!parentId) {
-    comment.replies.push(reply);
-  } else {
-    const replyIndex = comment.replies.findIndex((reply) => reply.id === id);
-    reply = { ...reply, replyingTo: comment.replies[replyIndex].user.username };
-    comment.replies[replyIndex].replies
-      ? comment.replies[replyIndex].replies.push(reply)
-      : (comment.replies[replyIndex].replies = [reply]);
+  if (parentId) {
+    const commentReply = comment.replies.find((reply) => reply.id === id);
+    reply.replyingTo = commentReply?.user.username as string
   }
+
+  comment.replies.push(reply);
 
   const updateComment = await fetch(
     `${API_URL}/comments/${parentId ? parentId : id}`,
@@ -309,35 +305,24 @@ const editComment = (button: Element, id: number, parentId: number) => {
   `;
 };
 
-const renderCommentTree = (
-  comment: UserComment,
-  parentId: number = 0,
-): string => {
-  const replies = comment.replies ?? [];
-
-  return `
-    ${renderComment(comment, parentId)}
-    ${
-      replies.length
-        ? `
-          <div class="pl-4 ml-4 border-l-2 border-l-gray-200">
-            ${replies
-              .map((reply) => renderCommentTree(reply, comment.id))
-              .join("")}
-          </div>
-        `
-        : ""
-    }
-  `;
-};
-
 // Display Contents in DOM
 const body = document.querySelector("body") as HTMLBodyElement;
 let comments = (await fetchData("comments")) as UserComment[];
 comments = comments.sort((a, b) => b.score - a.score);
 
 const commentsHTML = comments
-  .map((comment) => renderCommentTree(comment))
+  .map(
+    (comment) => `
+          ${renderComment(comment)}
+          ${
+            comment.replies.length > 0
+              ? `<div class="pl-4 ml-4 border-0 border-l-2 border-l-gray-200">
+              ${comment?.replies.map((reply) => renderComment(reply, comment.id)).join("")}
+          </div>`
+              : ""
+          }
+      `,
+  )
   .join("");
 
 const addCommentHtml = `<div class="py-4"><div class="bg-white p-4 flex gap-3 md:p-6 rounded-lg shadow-md">
