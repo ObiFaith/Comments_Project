@@ -2,9 +2,9 @@ import { CurrentUser, UserComment } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const fetchData = async (api: string) => {
-  const res = await fetch(`${API_URL}/${api}`);
-  if (!res.ok) throw new Error(`Unable to fetch ${api}`);
+const fetchData = async (endpoint: string) => {
+  const res = await fetch(`${API_URL}/${endpoint}`);
+  if (!res.ok) throw new Error(`Unable to fetch ${endpoint}`);
   return res.json();
 };
 
